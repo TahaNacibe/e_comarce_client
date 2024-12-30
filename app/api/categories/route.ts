@@ -15,7 +15,9 @@ const GET = async (req: NextRequest) => {
                 where:isRequestingVisibleItems? {isOnDisplay:true} : undefined
             })
 
-            return NextResponse.json({message:"On display items loaded",categoriesList},{status:200})
+            return NextResponse.json({message:"On display items loaded",categoriesList},{status:200,headers: {
+                'Cache-Control': 'no-store' // Prevent caching for dynamic data
+              }})
     } catch (error) {
         return NextResponse.json({message:"Error fetching the categories!",error},{status:500})
     }

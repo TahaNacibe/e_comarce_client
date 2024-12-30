@@ -87,7 +87,9 @@ const GET = async (req: NextRequest) => {
 
     return NextResponse.json(
       { message: "Products List loaded", productsList, pagesCount },
-      { status: 200 }
+      { status: 200,headers: {
+        'Cache-Control': 'no-store'
+      } }
     );
   } catch (error) {
     console.error("Error fetching products:", error);

@@ -12,7 +12,9 @@ const GET = async () => {
         
         //* if shop identity exist
         if (shopIdentity) {
-            return NextResponse.json({message:"MetaData Loaded",shopIdentity},{status:200})
+            return NextResponse.json({message:"MetaData Loaded",shopIdentity},{status:200,headers: {
+                'Cache-Control': 'no-store' // Prevent caching for dynamic data
+              }})
         }
 
         //* if no shop identity exist return the default call

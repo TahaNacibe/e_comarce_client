@@ -29,7 +29,9 @@ const GET = async (req: NextRequest) => {
             where:{userId:userId}
         })
 
-        return NextResponse.json({message:"record loaded",userOrdersRecord},{status:200})
+        return NextResponse.json({message:"record loaded",userOrdersRecord},{status:200,headers: {
+            'Cache-Control': 'no-store' // Prevent caching for dynamic data
+          }})
     } catch (error) {
         return NextResponse.json({message:"Error getting the records",error},{status:500})
     }

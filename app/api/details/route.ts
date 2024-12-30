@@ -40,7 +40,9 @@ const GET = async (req: NextRequest) => {
             
         })
 
-        return NextResponse.json({message:"Data have been fetched",targetProduct,relatedProducts},{status:200})
+        return NextResponse.json({message:"Data have been fetched",targetProduct,relatedProducts},{status:200,headers: {
+            'Cache-Control': 'no-store' // Prevent caching for dynamic data
+          }})
     } catch (error: unknown) {
         if (error instanceof Error) {
             return NextResponse.json({message:"Error while fetching the data",error},{status:500})
