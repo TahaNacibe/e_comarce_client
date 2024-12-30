@@ -18,7 +18,6 @@ const GET = async () => {
         //* if no shop identity exist return the default call
         return NextResponse.json({message:"No Default MetaData was set"},{status:404})
     } catch (error) {
-        console.log(error)
         return NextResponse.json({message:"Something went wrong while fetching the store metaData!"},{status:500})
     }
 }

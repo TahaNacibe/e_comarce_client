@@ -53,7 +53,6 @@ export function CartContextProvider({ children }: CartContextProviderProps) {
   //* Add or update a cart item
   function addOrUpdateCartItem(item: CartItem): void {
     let hasRun = false; // Track whether this function has already been executed
-    console.log("updated item : ", item);
   
     setCartItems((prev) => {
       if (hasRun) return prev; // Prevent duplicate execution
@@ -66,12 +65,10 @@ export function CartContextProvider({ children }: CartContextProviderProps) {
       );
   
       if (existingIndex !== -1) {
-        console.log("update case");
         const updatedCart = [...prev];
         updatedCart[existingIndex].quantity += item.quantity;
         return updatedCart;
       } else {
-        console.log("create case");
         return [...prev, item];
       }
     });

@@ -33,7 +33,6 @@ export default async function loadCarouselData() {
             specialOffersProducts
         }
     } catch (error) {
-        console.log(error)
         //* don't crash just return the empty state
         return {
             newlyAddedProducts:[],

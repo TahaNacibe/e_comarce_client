@@ -114,8 +114,6 @@ const UserCartPage: React.FC = () => {
     );
   };
 
-  const calculateTax = (subtotal: number): number => subtotal * 0.08;
-  const calculateShipping = (subtotal: number): number => subtotal > 100 ? 0 : 10;
 
   const handleSubmit = async () => {
     if (cartItems.length === 0) {
@@ -145,7 +143,6 @@ const UserCartPage: React.FC = () => {
       });
     }
 
-    // setTimeout(() => setAlertState({ message: "", type: "" }), 5000);
   };
 
   return (

@@ -6,7 +6,7 @@ import { ProductsDisplayInterface } from "../types";
 import Image from "next/image";
 
 
-export default function WideScreenProductsTable({cartItems,handleQuantityChange,removeCartItem}:ProductsDisplayInterface) {
+export default function WideScreenProductsTable({ cartItems, handleQuantityChange, removeCartItem }: ProductsDisplayInterface) {
     return (
         <Table>
         <TableHeader>
@@ -19,6 +19,7 @@ export default function WideScreenProductsTable({cartItems,handleQuantityChange,
           </TableRow>
         </TableHeader>
         <TableBody>
+         
           {cartItems.map((item) => (
             <TableRow key={`${item.productId}-${JSON.stringify(item.selectedProperties)}`}>
               <TableCell className="font-medium">
@@ -36,12 +37,15 @@ export default function WideScreenProductsTable({cartItems,handleQuantityChange,
               <TableCell>
                 <div className="text-sm text-gray-500 flex gap-2">
                   {Array.isArray(item.selectedProperties)
-                    ? item.selectedProperties.map((sub, index) => (
+                    ? item.selectedProperties.map((sub, index) => {
+                      const propertyObject = JSON.parse(sub)
+                    const valeString = Object.values(propertyObject)[0] as string
+                      return (
                         <Badge key={index} className="flex flex-col text-xs">
-                          <span>{sub.value}</span>
-                          {sub.price && <span className="text-xs text-gray-400">{`+${sub.price} DZD`}</span>}
+                          <span>{valeString}</span>
+                          {propertyObject.price && <span className="text-xs text-gray-400">{`+${propertyObject.price} DZD`}</span>}
                         </Badge>
-                      ))
+                      )})
                     : "No properties selected"}
                 </div>
               </TableCell>

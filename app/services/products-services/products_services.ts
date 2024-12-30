@@ -96,7 +96,6 @@ export default class ProductsServices {
               });
           searchParams.append("categoryId", categoryId)
           if (specialOffer) searchParams.append("filterForDiscount", specialOffer.toString())
-          console.log("price range is : ",priceRange)
           if (priceRange) {
             searchParams.append("priceRangeStart",priceRange[0].toString())
             searchParams.append("priceRangeEnd",priceRange[1].toString())

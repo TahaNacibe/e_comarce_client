@@ -46,7 +46,6 @@ export default class OrderServices {
             }
             return {success: false, message: "failed to load" }
         } catch (error:any) {
-            console.log(error.message)
             return { success: false, message: "error getting record" }
         }
     }
@@ -67,13 +66,12 @@ export default class OrderServices {
             unitePrice: Number(totalPrice) / quantity,
             totalPrice
         }
-        console.log('details for product metadata : ',productMetaData)
         return { success: true, message: "Product created", data:productMetaData };
     }
 
 
     //* create order
-    createOrderForUser = async (userDetails:UserDetails,items:CartItem[],totalPrice:number,userId?:string) => {
+    createOrderForUser = async (userDetails: UserDetails, items: CartItem[], totalPrice: number, userId?: string) => {
         try {
             const orderItem = {
             // User Information
@@ -120,7 +118,6 @@ export default class OrderServices {
             }
             return {success:false, message:"failed to send the order"}
         } catch (error) {
-            console.log(error)
             return {success:false, message:"failed to send the order"}
         }
     }

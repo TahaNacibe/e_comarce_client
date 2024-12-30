@@ -138,6 +138,34 @@ const ProductDetailPage: React.FC<ProductDetailsPageProps> = ({params}) => {
   };
 
 
+  type Property = {
+    value: string;
+    price?: string; // price is optional as it may be undefined
+};
+
+function restructureProperties(selectedProperties: Record<string, Property>): string[] {
+    return Object.entries(selectedProperties).map(([key, { value, price }]) => {
+        // Create the object to hold the key-value pair
+        const result: Record<string, any> = {
+            [key]: value,
+        };
+
+        // Add the price and changePrice flag if price is defined
+        if (price !== undefined) {
+            result['price'] = price;
+            result['changePrice'] = true;
+        } else {
+            result['changePrice'] = false;
+        }
+
+        return JSON.stringify(result); // Return the object as a JSON string
+    });
+}
+
+
+
+
+
   
   function addProductToTheCart(): void {
     const productMetaDataForOrder = orderServices.createNewOrderProductMetaDataFromUserInput({
@@ -145,7 +173,7 @@ const ProductDetailPage: React.FC<ProductDetailsPageProps> = ({params}) => {
       productName: product?.name!,
       quantity: productCount,
       productImage:product?.bigImageUrl ?? "",
-      selectedProperties: Object.values(selectedPropertyValues) as any,
+      selectedProperties: restructureProperties(selectedPropertyValues as any) as any,
       totalPrice: calculateFinalPrice()
     })
     addOrUpdateCartItem(productMetaDataForOrder.data as any)
@@ -316,11 +344,11 @@ const ProductDetailPage: React.FC<ProductDetailsPageProps> = ({params}) => {
       </div>
 
             {/* Related Products Carousel */}
-            <div className="mt-16 space-y-6">
-         {/* section title */}
-      <div className=" flex border-l-4 pl-4 mb-4 justify-between">
+            {relatedToProduct.length > 0 && <div className="mt-16 space-y-6">
+            {/* section title */}
+            <div className=" flex border-l-4 pl-4 mb-4 justify-between">
               <h1 className="text-2xl font-semibold">Similar Products</h1>
-      </div>
+            </div>
         <Carousel className="w-full">
           <CarouselContent className="-ml-2 md:-ml-4">
             {relatedToProduct.map((relatedProduct) => (
@@ -332,7 +360,7 @@ const ProductDetailPage: React.FC<ProductDetailsPageProps> = ({params}) => {
           <CarouselPrevious />
           <CarouselNext />
         </Carousel>
-      </div>
+      </div>}
       {/* Full Screen Image Modal */}
       {(showLargeImage || showMainImage) && (
         <div 
