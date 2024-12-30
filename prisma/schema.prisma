@@ -165,4 +165,10 @@ model shopPreferences {
   shopId    String @map("_id") @id
   shopIcon  String
   shopName  String
+  TikTokLink String?
+  facebookLink String?
+  instagramLink String?
+  phoneNumber String
+  email String
+  address String
 }

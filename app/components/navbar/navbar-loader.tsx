@@ -1,6 +1,6 @@
 
+import { getOnDisplayCategoriesData, getShopMetaData } from '@/app/services/navbar_services/navbar_services';
 import Navbar from './nav_bar';
-import { getOnDisplayCategoriesData, getShopMetaData } from '@/app/services/navbar_services/navbar_srvices';
 
 export default async function NavbarLoader() {
   const metaData = await getShopMetaData()

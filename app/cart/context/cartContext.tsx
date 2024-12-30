@@ -1,14 +1,19 @@
 "use client"
+import { createContext, ReactNode, useEffect, useState } from "react";
 
-import { createContext, ReactNode, useState } from "react";
+// Define the shape of a cart item
+interface CartItem {
+  productId: string, productName: string, quantity: number, selectedProperties: string[],totalPrice:string,productImage:string
+}
 
 // Define the shape of the context state
 interface CartContextType {
-  cartProducts: string[];
-  isProductInTheCart: (productId: string) => boolean;
-  changeProductStateInCart: (productId: string, actionIsAdd?: boolean) => void;
-  removeProductFromCart: (productId: string) => void;
-  getItemCountInTheCart: (productId: string) => number;
+  cartItems: CartItem[];
+  addOrUpdateCartItem: (item: CartItem) => void;
+  removeCartItem: (productId: string, selectedProperties: Record<string, string>) => void;
+  getCartItemQuantity: (productId: string, selectedProperties: Record<string, string>) => number;
+  isProductWithPropertiesInTheCart:(item:CartItem) => boolean
+  clearCart: () => void;
 }
 
 // Define the shape of the provider's props
@@ -17,42 +22,99 @@ interface CartContextProviderProps {
 }
 
 // Create context with an initial value (use `null` and handle it in the consumer for safety)
-export const CartContext = createContext<CartContextType | null>(null);
+export const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export function CartContextProvider({ children }: CartContextProviderProps) {
-  const [cartProducts, setCartProducts] = useState<string[]>([]);
+  const [cartItems, setCartItems] = useState<CartItem[]>([]);
 
-  //* Check if the product is in the cart already
-  function isProductInTheCart(productId: string): boolean {
-    return cartProducts.includes(productId);
+    //* Load cart from localStorage on mount
+    useEffect(() => {
+      const storedCart = localStorage.getItem("cartItems");
+      if (storedCart) {
+        setCartItems(JSON.parse(storedCart));
+      }
+    }, []);
+  
+    //* Save cart to localStorage whenever it changes
+    useEffect(() => {
+      localStorage.setItem("cartItems", JSON.stringify(cartItems));
+    }, [cartItems]);
+
+  //* check if item already exist
+  function isProductWithPropertiesInTheCart(item: CartItem): boolean {
+    const itemIndex = cartItems.findIndex((product) => 
+      product.productId === item.productId &&
+      JSON.stringify(product.selectedProperties) === JSON.stringify(item.selectedProperties)
+    );
+  
+    return itemIndex !== -1;
   }
 
-  //* Handle the add/remove action for the product in the cart
-  function changeProductStateInCart(productId: string, actionIsAdd = true): void {
-    setCartProducts((prev) =>
-      actionIsAdd ? [...prev, productId] : prev.filter((id) => id !== productId)
+  //* Add or update a cart item
+  function addOrUpdateCartItem(item: CartItem): void {
+    let hasRun = false; // Track whether this function has already been executed
+    console.log("updated item : ", item);
+  
+    setCartItems((prev) => {
+      if (hasRun) return prev; // Prevent duplicate execution
+      hasRun = true;
+  
+      const existingIndex = prev.findIndex(
+        (i) =>
+          i.productId === item.productId &&
+          JSON.stringify(i.selectedProperties) === JSON.stringify(item.selectedProperties)
+      );
+  
+      if (existingIndex !== -1) {
+        console.log("update case");
+        const updatedCart = [...prev];
+        updatedCart[existingIndex].quantity += item.quantity;
+        return updatedCart;
+      } else {
+        console.log("create case");
+        return [...prev, item];
+      }
+    });
+  }
+  
+
+  //* Remove a specific cart item
+  function removeCartItem(productId: string, selectedProperties: Record<string, string>): void {
+    setCartItems((prev) =>
+      prev.filter(
+        (item) =>
+          item.productId !== productId ||
+          JSON.stringify(item.selectedProperties) !== JSON.stringify(selectedProperties)
+      )
     );
   }
 
-  //* Handle removing a product completely from the cart
-  function removeProductFromCart(productId: string): void {
-    setCartProducts((prev) => prev.filter((id) => id !== productId));
+  //* Get the quantity of a specific item in the cart
+  function getCartItemQuantity(productId: string, selectedProperties: Record<string, string>): number {
+    const item = cartItems.find(
+      (i) =>
+        i.productId === productId &&
+        JSON.stringify(i.selectedProperties) === JSON.stringify(selectedProperties)
+    );
+    return item ? item.quantity : 0;
   }
 
-  //* Get the count of a specific item in the cart
-  function getItemCountInTheCart(productId: string): number {
-    return cartProducts.filter((id) => id === productId).length;
+  //* Clear the entire cart
+  function clearCart(): void {
+    setCartItems([]);
+    localStorage.removeItem("cartItems");
   }
 
   //* Return the provider with the context value
   return (
     <CartContext.Provider
       value={{
-        cartProducts,
-        isProductInTheCart,
-        changeProductStateInCart,
-        removeProductFromCart,
-        getItemCountInTheCart,
+        cartItems,
+        addOrUpdateCartItem,
+        removeCartItem,
+        getCartItemQuantity,
+        isProductWithPropertiesInTheCart,
+        clearCart,
       }}
     >
       {children}

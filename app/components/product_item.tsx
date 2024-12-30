@@ -1,7 +1,9 @@
+
 import React from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Flame, ShoppingCart, TicketPercent } from 'lucide-react';
+import Image from 'next/image';
 
 // Separate types into their own interfaces for better organization
 interface Product {
@@ -49,11 +51,11 @@ const ProductPrice = ({ price, discountPrice, isInDiscount }: {
   isInDiscount: boolean 
 }) => (
   <div className="flex items-center gap-1">
-    <span className="text-base font-semibold text-gray-900 pl-1">
+    <span className="text-base font-semibold text-gray-900 pl-1 line-clamp-1">
       {(discountPrice ?? price).toFixed(2)} DZD
     </span>
     {isInDiscount && discountPrice && (
-      <div className="text-xs text-gray-500 line-through align-middle">
+      <div className="text-xs text-gray-500 line-through align-middle line-clamp-1">
         {price} DZD
       </div>
     )}
@@ -73,8 +75,15 @@ const ProductWidget: React.FC<ProductWidgetProps> = ({
     return Math.round(((original - discounted) / original) * 100);
   };
 
+  function handleDisplayProductsDetails(e: React.MouseEvent<HTMLDivElement, MouseEvent>, product: Product): void {
+    e.preventDefault()
+    window.location.href = `/product-details/${product.id}`
+  }
+
   return (
-    <div className={`
+    <div
+      onClick={(e) => handleDisplayProductsDetails(e,product)}
+      className={`
       relative group transition-all duration-300
       ${isCarousel ? 'mt-24 hover:mt-16' : 'hover:-translate-y-2'}
     `}>
@@ -95,7 +104,9 @@ const ProductWidget: React.FC<ProductWidgetProps> = ({
       <div className="bg-white rounded-lg shadow-lg p-4 transition-shadow hover:shadow-xl">
         {/* Image */}
         <div className="relative aspect-square mb-4 overflow-hidden rounded-lg">
-          <img
+          <Image
+            width={500}
+            height={500}
             src={product.bigImageUrl}
             alt={product.name}
             className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-105"
@@ -131,7 +142,7 @@ const ProductWidget: React.FC<ProductWidgetProps> = ({
             className="w-full gap-2 transition-colors hover:bg-primary hover:text-primary-foreground"
           >
             <ShoppingCart className="h-4 w-4" />
-            Add to Cart
+            See Details
           </Button>
         </div>
       </div>

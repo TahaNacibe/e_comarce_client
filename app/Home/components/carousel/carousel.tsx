@@ -17,9 +17,9 @@ import { Products } from "@prisma/client"
 //* black promo banner component
 export default function PromoBanner({ newProducts, offersProducts }: { newProducts: Products[], offersProducts: Products[] }) {
   return (
-    <div className="w-screen h-[70vh] bg-black/95 flex items-center justify-between pt-12 pb-8"> {/* Adjusted height */}
+    <div className="w-screen h-[70vh] bg-black/95 flex items-center justify-between md:pt-12 pb-8 md:flex-row flex-col overflow-x-clip"> {/* Adjusted height */}
       {/* side title */}
-      <h1 className="text-6xl p-8 max-w-96 text-white">Check What New And Limited Offers</h1>
+      <h1 className="md:text-6xl text-4xl p-8 pb-0 max-w-96 text-white">Check Our New and limited offers, don&apos;t miss it</h1>
       
       {/* items carousel */}
       <div className="pr-12">
@@ -51,13 +51,13 @@ export function CarouselSpacing({ newProducts,offersProducts }: { newProducts: P
         plugins={[plugin.current]}
              onMouseEnter={plugin.current.stop}
             onMouseLeave={plugin.current.play as any}
-        className="w-full max-w-4xl mt-12 h-fit">
+        className="w-full max-w-4xl md:mt-12 mt-0 h-fit">
         
         {/* special offers */}
         <CarouselContent className="-ml-1">
           {offersProducts.map((product: any, index: number) => (
-            <CarouselItem key={index} className="pl-1 basis-1/3 ">
-              <div className="p-4 ">
+            <CarouselItem key={index} className="pl-1 md:basis-1/3 basis-1/4 ">
+              <div className="py-4 px-1 ">
                 <ProductWidget product={product} isCarousel={true} />
               </div>
             </CarouselItem>
@@ -65,8 +65,8 @@ export function CarouselSpacing({ newProducts,offersProducts }: { newProducts: P
 
           {/* new products lastly added and not inDiscount max of 10 */}
           {newProducts.map((product: any, index: number) => (
-            <CarouselItem key={index} className="pl-1 basis-1/3 ">
-              <div className="p-4 ">
+            <CarouselItem key={index} className="pl-1 md:basis-1/3 basis-1/4">
+              <div className="py-4 px-1 ">
                 <ProductWidget product={product} isCarousel={true}/>
               </div>
             </CarouselItem>

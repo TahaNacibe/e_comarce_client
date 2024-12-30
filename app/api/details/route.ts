@@ -32,15 +32,22 @@ const GET = async (req: NextRequest) => {
                 {isVisible: true}
             ]
             },
+            include: {
+                tags:true
+            },
             orderBy: { soldCount: "desc" },
-            take:RELATED_PRODUCTS_COUNT
+            take:RELATED_PRODUCTS_COUNT,
             
         })
 
         return NextResponse.json({message:"Data have been fetched",targetProduct,relatedProducts},{status:200})
-    } catch (error) {
-        console.log(error)
-        return NextResponse.json({message:"Error while fetching the data",error},{status:500})
+    } catch (error: unknown) {
+        if (error instanceof Error) {
+            return NextResponse.json({message:"Error while fetching the data",error},{status:500})
+          } else {
+            return NextResponse.json({message:"Unknown Error while fetching the data"},{status:500})
+          }
+        
     }
 }
 

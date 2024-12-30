@@ -1,18 +1,22 @@
 "use client"
-import React, { useState } from 'react';
+import React, { useContext, useState } from 'react';
 import { NavigationMenu, NavigationMenuList, NavigationMenuItem, NavigationMenuLink, NavigationMenuTrigger, NavigationMenuContent } from "@/components/ui/navigation-menu";
 import { Button } from "@/components/ui/button";
-import { Home, ShoppingCart, Search, Menu as MenuIcon, X, TrendingUp, Flame, Package, TicketPercent } from "lucide-react";
+import { Home, ShoppingCart, Search, Menu as MenuIcon, X, TrendingUp, Package, TicketPercent } from "lucide-react";
 import { useSession } from 'next-auth/react';
 import Image from 'next/image';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Input } from '@/components/ui/input';
+import { CartContext } from '@/app/cart/context/cartContext';
+import Link from 'next/link';
+
 
 export default function Navbar({ initialMetadata, initialCategories }: any) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const { data: session } = useSession();
+  const cartContext = useContext(CartContext);
 
   function handleSearchSubmit(e: React.KeyboardEvent<HTMLInputElement>): void {
     if (e.key === "Enter") {
@@ -22,8 +26,16 @@ export default function Navbar({ initialMetadata, initialCategories }: any) {
     }
   }
 
+  if (!cartContext) {
+    throw new Error("CartContext is not available. Ensure CartContextProvider wraps the component tree.");
+  }
+  
+  const {
+    cartItems
+  } = cartContext;
+
   return (
-    <header className="sticky top-0 z-50 w-full bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60 border-b">
+    <header className="sticky top-0 z-50 w-full bg-white/40 backdrop-blur supports-[backdrop-filter]:bg-white/20">
       <div className="container mx-auto px-4">
         <nav className="flex h-16 items-center justify-between">
           <div className="flex items-center gap-3">
@@ -43,10 +55,10 @@ export default function Navbar({ initialMetadata, initialCategories }: any) {
           {/* Desktop Navigation */}
           <NavigationMenu className="hidden md:block">
             <NavigationMenuList className="flex gap-6">
-              <NavigationMenuItem>
+              <NavigationMenuItem className='bg-transparent'>
                 <NavigationMenuLink 
                   href="/" 
-                  className="group inline-flex h-10 w-max items-center justify-center rounded-md bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50"
+                  className="group bg-transparent inline-flex h-10 w-max items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50"
                 >
                   <Home className="mr-2 h-4 w-4" />
                   Home
@@ -55,7 +67,7 @@ export default function Navbar({ initialMetadata, initialCategories }: any) {
               
               {/* Products Dropdown */}
               <NavigationMenuItem>
-                <NavigationMenuTrigger className="shadow-none">Products</NavigationMenuTrigger>
+                <NavigationMenuTrigger className="shadow-none bg-transparent">Products</NavigationMenuTrigger>
                 <NavigationMenuContent>
                   <ul className="grid gap-3 p-4 md:w-[350px] bg-white rounded-md grid-cols-2">
                     <NavigationMenuLink href='/products/all-products' className=' bg-gray-600/5 p-4 rounded-lg items-start justify-end flex flex-col gap-2'>
@@ -88,7 +100,7 @@ export default function Navbar({ initialMetadata, initialCategories }: any) {
 
               {/* Categories Dropdown */}
               <NavigationMenuItem>
-                <NavigationMenuTrigger className="shadow-none">Categories</NavigationMenuTrigger>
+                <NavigationMenuTrigger className="shadow-none bg-transparent">Categories</NavigationMenuTrigger>
                 <NavigationMenuContent>
                   <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-2 lg:w-[600px] bg-white rounded-md">
                     {initialCategories.map((category:any,index:number) => (
@@ -125,11 +137,15 @@ export default function Navbar({ initialMetadata, initialCategories }: any) {
             >
               <Search className="h-5 w-5" />
             </Button>
-            <Button variant="ghost" size="icon" className="hover:bg-accent transition-colors">
-              <ShoppingCart className="h-5 w-5" />
+            <Button variant={"ghost"} className="hover:bg-accent transition-colors relative">
+              <Link href={"/cart"}>
+              <ShoppingCart className='w-5 h-5' />
+              {cartItems.length > 0 && <div className='absolute top-0 right-0 rounded-full bg-red-700 text-sm text-white px-1'> {cartItems.length} </div>}
+              </Link>
             </Button>
             
             {session?.user ? (
+              <Link href={`/user-record?client-id=${session.user.id}`}>
               <Image
                 src={session.user.image ?? "/default-avatar.png"}
                 alt={session.user.name ?? "User"}
@@ -137,6 +153,7 @@ export default function Navbar({ initialMetadata, initialCategories }: any) {
                 height={32}
                 className="rounded-full hover:opacity-90 transition-opacity cursor-pointer"
               />
+              </Link>
             ) : (
               <Button className="hidden md:inline-flex hover:opacity-90 transition-opacity">Sign In</Button>
             )}
@@ -179,19 +196,15 @@ export default function Navbar({ initialMetadata, initialCategories }: any) {
                 
                 <div className="space-y-2 p-2">
                   <Badge className="px-3 text-sm font-semibold">Products</Badge>
-                  <a href="/products" className="flex items-center gap-2 rounded-md p-3 hover:bg-accent transition-colors">
+                  <a href="/products/all-products" className="flex items-center gap-2 rounded-md p-3 hover:bg-accent transition-colors">
                     <Package className="h-4 w-4" />
                     All Products
                   </a>
-                  <a href="/top-products" className="flex items-center gap-2 rounded-md p-3 hover:bg-accent transition-colors">
+                  <a href="/products/top-products" className="flex items-center gap-2 rounded-md p-3 hover:bg-accent transition-colors">
                     <TrendingUp className="h-4 w-4" />
                     Top Products
                   </a>
-                  <a href="/new-arrivals" className="flex items-center gap-2 rounded-md p-3 hover:bg-accent transition-colors">
-                    <Flame className="h-4 w-4" />
-                    New Arrivals
-                  </a>
-                  <a href="/special-offers" className="flex items-center gap-2 rounded-md p-3 hover:bg-accent transition-colors">
+                  <a href="/products/special-offers" className="flex items-center gap-2 rounded-md p-3 hover:bg-accent transition-colors">
                     <TicketPercent className="h-4 w-4" />
                     Special Offers
                   </a>
@@ -202,7 +215,7 @@ export default function Navbar({ initialMetadata, initialCategories }: any) {
                   {initialCategories.map((category:any,index:number) => (
                     <div key={category.id}>
                       <a 
-                      href={`/categories/${category.name.toLowerCase()}`}
+                      href={`/categories/${category.id}?category-name=${category.name}`}
                       className="flex items-center justify-between rounded-md p-3 hover:bg-accent transition-colors"
                     >
                       <div className="space-y-1">

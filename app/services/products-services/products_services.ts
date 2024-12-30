@@ -86,7 +86,7 @@ export default class ProductsServices {
             //* const
             const BASE_URL = `/api/products`;
             const QUERY_LIMIT = "20"
-            let orderByRule = sortBy ?? "desc"
+            const orderByRule = sortBy ?? "desc"
 
             //* form the search url
             const searchParams = new URLSearchParams({
@@ -156,7 +156,7 @@ export default class ProductsServices {
   }
   
 
-  getSingleProductDetailsForDisplay = async (targetId: string) => {
+  async getSingleProductDetailsForDisplay(targetId: string){
     try {
       if(!targetId) return {success:false, message:"Missing the product id",data:null}
       //* get the products data

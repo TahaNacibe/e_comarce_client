@@ -7,12 +7,21 @@ import PaginationWidget from "../components/pagination_widget";
 import ProductsDisplaySection from "../components/products_section/products_display_section";
 import { FilterState, SortOption } from "../types/filter_types";
 import { Products, Tags } from "@prisma/client";
-import { useEffect, useState } from "react";
+import { useEffect, useState,Suspense } from "react";
 import CategoriesServices from "../services/categories-services/categories_services";
 import ProductsServices from "../services/products-services/products_services";
 
 
-export default function SearchPage() {
+
+const SearchPageWithSuspense = () => {
+    return (
+        <Suspense>
+            <SearchPage />
+        </Suspense>
+    )
+}
+
+const SearchPage = () => {
 
     //* manage state
     const [activePageIndex, setActivePageIndex] = useState(1)
@@ -95,3 +104,6 @@ export default function SearchPage() {
         </div>
     )
 }
+
+
+export default SearchPageWithSuspense

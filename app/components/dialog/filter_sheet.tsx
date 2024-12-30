@@ -14,21 +14,15 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet"
-import { FilterIcon, X } from "lucide-react"
+import { FilterIcon } from "lucide-react"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 import {
-  Card,
   CardContent,
 } from "@/components/ui/card"
 import { Tags } from '@prisma/client';
 import { FilterState, SortOption } from '@/app/types/filter_types';
 
-
-interface PriceRange {
-  min: number;
-  max: number;
-}
 
 interface FilterSheetProps {
   onApplyFilters?: (filters: FilterState) => void;

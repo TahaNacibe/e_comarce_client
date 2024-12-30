@@ -7,7 +7,6 @@ import ProductsServices from "@/app/services/products-services/products_services
 import { SortOption, FilterState } from "@/app/types/filter_types";
 import capitalizeFirstLetter from "@/utils/capitalizeFirstLetter";
 import { Products } from "@prisma/client";
-import { LoaderCircle } from "lucide-react";
 import { use, useEffect, useState } from "react";
 
 

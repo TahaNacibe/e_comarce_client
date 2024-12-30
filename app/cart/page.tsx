@@ -1,206 +1,281 @@
+"use client"
 import React, { useEffect, useState } from "react";
+import { useContext } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Package, CreditCard, Truck } from "lucide-react";
+import { CartContext } from "./context/cartContext";
+import OrderServices from "../services/order-services/order_services";
+import { useSession } from "next-auth/react";
+import { UserDetails, AlertState, CartItem } from "./types";
+import MobileFriendlyProductsDisplay from "./components/small_display_table";
+import WideScreenProductsTable from "./components/wide_display_table";
+import { useToast } from "@/hooks/use-toast";
 
-interface CartProduct {
-  id: number;
-  name: string;
-  price: number;
-  discountedPrice?: number;
-  image: string;
-  quantity: number;
-}
-
-interface UserDetails {
-  fullName: string;
-  email: string;
-  phone: string;
-  address: string;
-}
+// Proper type definitions
 
 const UserCartPage: React.FC = () => {
-  const [cartProducts, setCartProducts] = useState<CartProduct[]>([]);
-  const [userDetails, setUserDetails] = useState<UserDetails>({
-    fullName: "",
-    email: "",
-    phone: "",
-    address: "",
+  const cartContext = useContext(CartContext);
+  
+  if (!cartContext) {
+    throw new Error("Cart context must be used within CartContextProvider");
+  }
+
+  const { cartItems, addOrUpdateCartItem, removeCartItem } = cartContext;
+
+  const [userDetails, setUserDetails] = useState<UserDetails>(() => {
+      return {
+        fullName: "",
+        email: "",
+        phone: "",
+        address: "",
+        houseNumber: "",
+        city: "",
+        zipCode: ""
+      };
   });
+  
   const [errors, setErrors] = useState<Partial<UserDetails>>({});
-  const [alertMessage, setAlertMessage] = useState<string>("");
+  const [alertState, setAlertState] = useState<AlertState>({ 
+    message: "", 
+    type: "" 
+  });
 
-  useEffect(() => {
-    const savedUserDetails = localStorage.getItem("userDetails");
-    if (savedUserDetails) {
-      setUserDetails(JSON.parse(savedUserDetails));
+  const orderServices = new OrderServices()
+  const { data: session } = useSession()
+  const { toast } = useToast()
+
+  const handleQuantityChange = (item: CartItem, delta: number): void => {
+    const newQuantity = item.quantity + delta;
+    if (newQuantity === 0) {
+      removeCartItem(item.productId, item.selectedProperties as any);
+    } else {
+      addOrUpdateCartItem({
+        ...item,
+        quantity: delta
+      });
     }
-    // Mock cart data
-    const mockCartProducts: CartProduct[] = [
-      {
-        id: 1,
-        name: "Product A",
-        price: 100,
-        discountedPrice: 80,
-        image: "https://via.placeholder.com/150",
-        quantity: 2,
-      },
-      {
-        id: 2,
-        name: "Product B",
-        price: 50,
-        image: "https://via.placeholder.com/150",
-        quantity: 1,
-      },
-    ];
-    setCartProducts(mockCartProducts);
-  }, []);
-
-  const handleQuantityChange = (id: number, delta: number) => {
-    setCartProducts((prev) =>
-      prev.map((product) =>
-        product.id === id
-          ? { ...product, quantity: Math.max(1, product.quantity + delta) }
-          : product
-      )
-    );
   };
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement>,
     field: keyof UserDetails
-  ) => {
+  ): void => {
     const value = e.target.value;
-    setUserDetails((prev) => ({ ...prev, [field]: value }));
-    localStorage.setItem(
-      "userDetails",
-      JSON.stringify({ ...userDetails, [field]: value })
-    );
+    setUserDetails(prev => {
+      const newDetails = { ...prev, [field]: value };
+      if (typeof window !== "undefined") {
+        localStorage.setItem("userDetails", JSON.stringify(newDetails));
+      }
+      return newDetails;
+    });
+
+    
+    if (errors[field]) {
+      setErrors(prev => ({ ...prev, [field]: undefined }));
+    }
   };
 
-  const validateForm = () => {
+  const validateForm = (): boolean => {
     const newErrors: Partial<UserDetails> = {};
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const phoneRegex = /^\+?[\d\s-]{10,}$/;
+    const zipRegex = /^\d{5}(-\d{4})?$/;
+
     if (!userDetails.fullName.trim()) newErrors.fullName = "Full name is required";
-    if (!userDetails.email.trim()) newErrors.email = "Email is required";
-    if (!userDetails.phone.trim()) newErrors.phone = "Phone number is required";
+    if (!userDetails.email.trim()) {
+      newErrors.email = "Email is required";
+    } else if (!emailRegex.test(userDetails.email)) {
+      newErrors.email = "Invalid email format";
+    }
+    if (!userDetails.phone.trim()) {
+      newErrors.phone = "Phone number is required";
+    } else if (!phoneRegex.test(userDetails.phone)) {
+      newErrors.phone = "Invalid phone format";
+    }
     if (!userDetails.address.trim()) newErrors.address = "Address is required";
+    if (!userDetails.city.trim()) newErrors.city = "City is required";
+    if (!userDetails.houseNumber.trim()) newErrors.houseNumber = "House number is required";
+    if (!userDetails.zipCode.trim()) {
+      newErrors.zipCode = "ZIP code is required";
+    } else if (!zipRegex.test(userDetails.zipCode)) {
+      newErrors.zipCode = "Invalid ZIP code format";
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = () => {
-    if (validateForm()) {
-      setAlertMessage("Order placed successfully!");
-      setTimeout(() => setAlertMessage(""), 3000);
-    } else {
-      setAlertMessage("Please fix the errors before submitting.");
-      setTimeout(() => setAlertMessage(""), 3000);
-    }
-  };
-
-  const calculateTotalPrice = () => {
-    return cartProducts.reduce(
-      (total, product) =>
-        total + (product.discountedPrice ?? product.price) * product.quantity,
-      0
+  const calculateSubtotal = (): number => {
+    return cartItems.reduce((total, item) => 
+      total + parseFloat(item.totalPrice) * item.quantity, 0
     );
   };
 
+  const calculateTax = (subtotal: number): number => subtotal * 0.08;
+  const calculateShipping = (subtotal: number): number => subtotal > 100 ? 0 : 10;
+
+  const handleSubmit = async () => {
+    if (cartItems.length === 0) {
+      toast({
+        className:"bg-orange-800 text-white",
+        description: "Your cart is empty",
+        title: "Can't sent order!"
+      });
+      return;
+    }
+
+    if (validateForm()) {
+      const response = await orderServices.createOrderForUser(userDetails, cartItems, calculateSubtotal(), session?.user.id)
+      if (response.success) {
+        cartContext.clearCart();
+      }
+      toast({
+        className:`${response.success? "bg-blue-800" : "bg-red-800"} text-white`,
+        title: response.success ? "Order was placed" : "Could'nt sent order",
+        description: response.success? "we will call to confirm later": response.message
+      })
+    } else {
+      toast({
+        variant:"destructive",
+        description: "Please fix the form errors before submitting",
+        title: "Can't send order!"
+      });
+    }
+
+    // setTimeout(() => setAlertState({ message: "", type: "" }), 5000);
+  };
+
   return (
-    <div className="p-4 max-w-4xl mx-auto">
-      <h1 className="text-2xl font-bold mb-4">Your Cart</h1>
+    <div className="p-4 max-w-7xl mx-auto">
+      <h1 className="text-3xl font-bold mb-6">Your Shopping Cart</h1>
 
-      {cartProducts.length === 0 ? (
-        <p>Your cart is empty.</p>
-      ) : (
-        <table className="w-full border-collapse border border-gray-300 mb-6">
-          <thead>
-            <tr>
-              <th className="border border-gray-300 p-2">Product</th>
-              <th className="border border-gray-300 p-2">Quantity</th>
-              <th className="border border-gray-300 p-2">Price</th>
-            </tr>
-          </thead>
-          <tbody>
-            {cartProducts.map((product) => (
-              <tr key={product.id}>
-                <td className="border border-gray-300 p-2 flex items-center">
-                  <img
-                    src={product.image}
-                    alt={product.name}
-                    className="w-16 h-16 object-cover mr-4"
-                  />
-                  {product.name}
-                </td>
-                <td className="border border-gray-300 p-2 text-center">
-                  <button
-                    onClick={() => handleQuantityChange(product.id, -1)}
-                    className="px-2 py-1 bg-gray-200 hover:bg-gray-300"
-                  >
-                    -
-                  </button>
-                  <span className="mx-2">{product.quantity}</span>
-                  <button
-                    onClick={() => handleQuantityChange(product.id, 1)}
-                    className="px-2 py-1 bg-gray-200 hover:bg-gray-300"
-                  >
-                    +
-                  </button>
-                </td>
-                <td className="border border-gray-300 p-2 text-right">
-                  ${
-                    ((product.discountedPrice ?? product.price) *
-                    product.quantity).toFixed(2)
-                  }
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
-
-      <h2 className="text-xl font-bold mb-4">User Details</h2>
-      <form className="space-y-4">
-        {[
-          { label: "Full Name", field: "fullName" },
-          { label: "Email", field: "email" },
-          { label: "Phone", field: "phone" },
-          { label: "Address", field: "address" },
-        ].map(({ label, field }) => (
-          <div key={field}>
-            <label className="block font-medium mb-1">
-              {label}
-              <input
-                type="text"
-                value={userDetails[field as keyof UserDetails]}
-                onChange={(e) =>
-                  handleInputChange(e, field as keyof UserDetails)
-                }
-                className="block w-full border border-gray-300 p-2 rounded"
-              />
-            </label>
-            {errors[field as keyof UserDetails] && (
-              <p className="text-red-500 text-sm">
-                {errors[field as keyof UserDetails]}
-              </p>
-            )}
-          </div>
-        ))}
-      </form>
-
-      <h2 className="text-xl font-bold my-4">Order Summary</h2>
-      <p className="text-lg font-medium mb-4">
-        Total: ${calculateTotalPrice().toFixed(2)}
-      </p>
-
-      <button
-        onClick={handleSubmit}
-        className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-      >
-        Place Order
-      </button>
-
-      {alertMessage && (
-        <div className="mt-4 p-2 bg-yellow-100 border border-yellow-300 text-yellow-700">
-          {alertMessage}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2">
+          <Card className="shadow-lg">
+            <CardHeader className="border-b">
+              <CardTitle className="flex items-center gap-2">
+                <Package className="h-5 w-5" />
+                Cart Items ({cartItems.length})
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              {cartItems.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-12 text-gray-500">
+                  <Package className="h-12 w-12 mb-4" />
+                  <p>Your cart is empty</p>
+                </div>
+              ) : (
+                  <div>
+                    <div className="hidden md:block w-full">
+                    <WideScreenProductsTable
+                      cartItems={cartItems}
+                      handleQuantityChange={(item: CartItem, newQuantity: number) => handleQuantityChange(item, newQuantity)}
+                      removeCartItem={(id: string, properties: any) => removeCartItem(id,properties)} />
+                    </div>
+                    <MobileFriendlyProductsDisplay
+                      cartItems={cartItems}
+                      handleQuantityChange={(item: CartItem, newQuantity: number) => handleQuantityChange(item, newQuantity)}
+                      removeCartItem={(id: string, properties: any) => removeCartItem(id,properties)} />
+                  </div>
+              )}
+            </CardContent>
+          </Card>
         </div>
+
+        <div className="space-y-6">
+          <Card className="shadow-lg">
+            <CardHeader className="border-b">
+              <CardTitle className="flex items-center gap-2">
+                <CreditCard className="h-5 w-5" />
+                Order Summary
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4 pt-6">
+              {cartItems.length > 0 && (
+                <>
+                  <div className="space-y-2">
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Subtotal</span>
+                      <span>{calculateSubtotal().toFixed(2)}Dzd</span>
+                    </div>
+                    
+                   
+                    <div className="border-t pt-4 mt-4">
+                      <div className="flex justify-between font-bold text-lg">
+                        <span>Total</span>
+                        <span>
+                          {(
+                            calculateSubtotal()
+                          ).toFixed(2)}Dzd
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card className="shadow-lg">
+            <CardHeader className="border-b">
+              <CardTitle className="flex items-center gap-2">
+                <Truck className="h-5 w-5" />
+                Shipping Information
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <form className="space-y-4 pt-6">
+                {[
+                  { label: "Full Name", field: "fullName" },
+                  { label: "Email", field: "email" },
+                  { label: "Phone", field: "phone" },
+                  { label: "House number", field: "houseNumber" },
+                  { label: "Address", field: "address" },
+                  { label: "City", field: "city" },
+                  { label: "ZIP Code", field: "zipCode" },
+                ].map(({ label, field }) => (
+                  <div key={field}>
+                    <label className="block text-sm font-medium mb-1">
+                      {label}
+                    </label>
+                    <Input
+                      type={field === "email" ? "email" : field === "houseNumber"? "number" : "text"}
+                      value={userDetails[field as keyof UserDetails]}
+                      onChange={(e) => handleInputChange(e, field as keyof UserDetails)}
+                      className={errors[field as keyof UserDetails] ? "border-red-500" : ""}
+                    />
+                    {errors[field as keyof UserDetails] && (
+                      <p className="text-red-500 text-sm mt-1">
+                        {errors[field as keyof UserDetails]}
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </form>
+            </CardContent>
+          </Card>
+
+          <Button 
+            className="w-full"
+            size="lg"
+            onClick={handleSubmit}
+            disabled={cartItems.length === 0}
+          >
+            Place Order
+          </Button>
+        </div>
+      </div>
+
+      {alertState.message && (
+        <Alert 
+          variant={alertState.type === "error" ? "destructive" : "default"}
+          className="mt-6"
+        >
+          <AlertDescription>{alertState.message}</AlertDescription>
+        </Alert>
       )}
     </div>
   );

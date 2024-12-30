@@ -3,15 +3,15 @@ import ProductsSectionForHomePage from "./components/products-display/products_d
 
 export default function HomePage() {
   return (
-    <section className="snap-y snap-mandatory h-screen overflow-y-auto scroll-smooth transition-all">
+    <section className="transition-all">
       {/* Carousel Section */}
       <div className="mb-24 h-full snap-start">
         <CarouselLoader />
       </div>
 
       {/* Products Section */}
-      <div className="h-screen snap-start pt-4 overflow-hidden">
-        <div className="h-full overflow-y-auto scroll-smooth">
+      <div className="pt-28 md:pt-1">
+        <div className="">
           <ProductsSectionForHomePage />
         </div>
       </div>
