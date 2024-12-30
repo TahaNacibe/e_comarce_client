@@ -3,7 +3,7 @@ import React, { useContext, useState } from 'react';
 import { NavigationMenu, NavigationMenuList, NavigationMenuItem, NavigationMenuLink, NavigationMenuTrigger, NavigationMenuContent } from "@/components/ui/navigation-menu";
 import { Button } from "@/components/ui/button";
 import { Home, ShoppingCart, Search, Menu as MenuIcon, X, TrendingUp, Package, TicketPercent } from "lucide-react";
-import { useSession } from 'next-auth/react';
+import { signIn, useSession } from 'next-auth/react';
 import Image from 'next/image';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
@@ -155,7 +155,9 @@ export default function Navbar({ initialMetadata, initialCategories }: any) {
               />
               </Link>
             ) : (
-              <Button className="hidden md:inline-flex hover:opacity-90 transition-opacity">Sign In</Button>
+                <Button
+                  onClick={() => signIn("google")}
+                  className="hidden md:inline-flex hover:opacity-90 transition-opacity">Sign In</Button>
             )}
             
             <Button 
