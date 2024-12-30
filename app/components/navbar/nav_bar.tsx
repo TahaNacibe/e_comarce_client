@@ -35,7 +35,7 @@ export default function Navbar({ initialMetadata, initialCategories }: any) {
   } = cartContext;
 
   return (
-    <header className="sticky top-0 z-50 w-full bg-white/40 backdrop-blur supports-[backdrop-filter]:bg-white/20">
+    <header className="sticky top-0 z-50 w-full md:bg-white/40 md:backdrop-blur md:supports-[backdrop-filter]:bg-white/20 bg-white/95">
       <div className="container mx-auto px-4">
         <nav className="flex h-16 items-center justify-between">
           <div className="flex items-center gap-3">
@@ -236,7 +236,9 @@ export default function Navbar({ initialMetadata, initialCategories }: any) {
                 </div>
                 
                 {!session?.user && (
-                  <Button className="w-full hover:opacity-90 transition-opacity">Sign In</Button>
+                  <div className='p-2'>
+                    <Button className="w-full hover:opacity-90 transition-opacity">Sign In</Button>
+                  </div>
                 )}
               </div>
             </nav>

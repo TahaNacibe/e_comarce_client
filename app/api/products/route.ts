@@ -68,7 +68,6 @@ const GET = async (req: NextRequest) => {
       ...(searchQuery && {name:{contains:searchQuery,mode: "insensitive",}})
     };
 
-    console.log("filters stack : ",filters)
     
     //* build order rules
     const ordersRules = getOrderTypeBasedOnOrderByParameter(orderBy)
