@@ -9,6 +9,7 @@ const authOptions: AuthOptions = {
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+      allowDangerousEmailAccountLinking: true,
       authorization: {
         params: {
           redirect_uri: `${process.env.NEXTAUTH_URL}/api/auth/callback/google`,
@@ -21,29 +22,7 @@ const authOptions: AuthOptions = {
   session: {
     strategy: "jwt",
   },
-  pages: {},
   callbacks: {
-    async signIn({ user}) {
-      if (user) {
-        const dbUser = await prisma.user.findUnique({
-          where: { email: user.email! },
-        });
-
-        
-        if (!dbUser) {
-          // Create new user with default role
-          await prisma.user.create({
-            data: {
-              email: user.email!,
-              name: user.name,
-              role: "USER", // Set default role
-            },
-          });
-        }
-      }
-      return true;
-    },
-
     async jwt({ token, user }) {
       if (user) {
         const dbUser = await prisma.user.findUnique({
@@ -67,6 +46,7 @@ const authOptions: AuthOptions = {
     },
   },
 };
+
 
 const handler = NextAuth(authOptions);
 
