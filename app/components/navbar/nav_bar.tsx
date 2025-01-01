@@ -237,7 +237,9 @@ export default function Navbar({ initialMetadata, initialCategories }: any) {
                 
                 {!session?.user && (
                   <div className='p-2'>
-                    <Button className="w-full hover:opacity-90 transition-opacity">Sign In</Button>
+                    <Button
+                      onClick={() => signIn("google")}
+                      className="w-full hover:opacity-90 transition-opacity">Sign In</Button>
                   </div>
                 )}
               </div>
