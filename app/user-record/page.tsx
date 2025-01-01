@@ -151,7 +151,7 @@ const ProfilePage = () => {
             className="text-sm flex items-center space-x-2"
           >
             <LogOut className="w-5 h-5" />
-            <span>Sign out</span>
+            <span className='md:block hidden'>Sign out</span>
           </Button>} />
           
         </div>
