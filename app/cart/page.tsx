@@ -13,6 +13,16 @@ import { UserDetails, AlertState, CartItem } from "./types";
 import MobileFriendlyProductsDisplay from "./components/small_display_table";
 import WideScreenProductsTable from "./components/wide_display_table";
 import { useToast } from "@/hooks/use-toast";
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
+
+// interface
+interface CityAndFee{
+    city: string,
+  price: string,
+  id:string,
+  currency: string
+}
+
 
 // Proper type definitions
 
@@ -25,6 +35,8 @@ const UserCartPage: React.FC = () => {
 
   const { cartItems, addOrUpdateCartItem, removeCartItem } = cartContext;
 
+  const [selectedCity, setSelectedCity] = useState<CityAndFee | null>(null)
+  const [citiesAndFees, setCitiesAndFees] = useState<CityAndFee[]>([])
   const [userDetails, setUserDetails] = useState<UserDetails>(() => {
       return {
         fullName: "",
@@ -47,6 +59,16 @@ const UserCartPage: React.FC = () => {
   const { data: session } = useSession()
   const { toast } = useToast()
 
+
+  //* load cities
+  const loadCities = async () => { 
+    const response = await orderServices.loadCitiesAndDeliveryFees()
+    if (response.success) {
+      setCitiesAndFees(response.data)
+    }
+  }
+
+
   const handleQuantityChange = (item: CartItem, delta: number): void => {
     const newQuantity = item.quantity + delta;
     if (newQuantity === 0) {
@@ -60,10 +82,9 @@ const UserCartPage: React.FC = () => {
   };
 
   const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement>,
+    value: string,
     field: keyof UserDetails
   ): void => {
-    const value = e.target.value;
     setUserDetails(prev => {
       const newDetails = { ...prev, [field]: value };
       if (typeof window !== "undefined") {
@@ -96,7 +117,7 @@ const UserCartPage: React.FC = () => {
       newErrors.phone = "Invalid phone format";
     }
     if (!userDetails.address.trim()) newErrors.address = "Address is required";
-    if (!userDetails.city.trim()) newErrors.city = "City is required";
+    if (!selectedCity) newErrors.city = "City is required";
     if (!userDetails.houseNumber.trim()) newErrors.houseNumber = "House number is required";
     if (!userDetails.zipCode.trim()) {
       newErrors.zipCode = "ZIP code is required";
@@ -113,6 +134,10 @@ const UserCartPage: React.FC = () => {
       total + parseFloat(item.totalPrice) * item.quantity, 0
     );
   };
+
+  const calculateTotalPrice = (): number => { 
+    return calculateSubtotal() + (selectedCity? Number(selectedCity.price) : 0)
+  }
 
 
   const handleSubmit = async () => {
@@ -144,6 +169,21 @@ const UserCartPage: React.FC = () => {
     }
 
   };
+
+  const handleSelectedCityChange = (city: string) => {
+    const cityData = citiesAndFees.find(cityData => cityData.city === city)
+    if (cityData) {
+      console.log(cityData)
+      handleInputChange(city,"city")
+      setSelectedCity(cityData)
+    }
+  }
+
+
+
+  useEffect(() => {
+    loadCities()
+  },[])
 
   return (
     <div className="p-4 max-w-7xl mx-auto">
@@ -198,6 +238,10 @@ const UserCartPage: React.FC = () => {
                       <span className="text-gray-600">Subtotal</span>
                       <span>{calculateSubtotal().toFixed(2)}Dzd</span>
                     </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Delivery fee</span>
+                      <span>{selectedCity? Number(selectedCity.price) : 0}Dzd</span>
+                    </div>
                     
                    
                     <div className="border-t pt-4 mt-4">
@@ -205,7 +249,7 @@ const UserCartPage: React.FC = () => {
                         <span>Total</span>
                         <span>
                           {(
-                            calculateSubtotal()
+                            calculateTotalPrice()
                           ).toFixed(2)}Dzd
                         </span>
                       </div>
@@ -238,12 +282,28 @@ const UserCartPage: React.FC = () => {
                     <label className="block text-sm font-medium mb-1">
                       {label}
                     </label>
-                    <Input
+                    {label === "City" ?
+                    <Select onValueChange={(value) => handleSelectedCityChange(value) }>
+                    <SelectTrigger className="w-[180px]">
+                      <SelectValue placeholder="Select a City" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        <SelectLabel>City</SelectLabel>
+                            {citiesAndFees.map(cityData => (
+                              <SelectItem
+                                key={cityData.id} value={cityData.city}>
+                                {cityData.city}</SelectItem>
+                        )) }
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                    :<Input
                       type={field === "email" ? "email" : field === "houseNumber"? "number" : "text"}
                       value={userDetails[field as keyof UserDetails]}
-                      onChange={(e) => handleInputChange(e, field as keyof UserDetails)}
+                      onChange={(e) => handleInputChange(e.target.value, field as keyof UserDetails)}
                       className={errors[field as keyof UserDetails] ? "border-red-500" : ""}
-                    />
+                    />}
                     {errors[field as keyof UserDetails] && (
                       <p className="text-red-500 text-sm mt-1">
                         {errors[field as keyof UserDetails]}

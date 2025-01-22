@@ -121,4 +121,21 @@ export default class OrderServices {
             return {success:false, message:"failed to send the order"}
         }
     }
+
+
+
+    loadCitiesAndDeliveryFees = async () => { 
+        try {
+            const response = await fetch('/api/cities', {
+                method: "GET"
+            })
+            if (response.ok) {
+                const data = await response.json()
+                return {success:true, message:"cities loaded", data:data.data}
+            }
+            return {success:false, message:"failed to load cities"}
+        } catch (error) {
+            return {success:false, message:"failed to load cities"}
+        }
+    }
 }
